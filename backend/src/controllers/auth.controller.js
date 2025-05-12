@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import User from "../models/User.model.js";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import { upsertStreamUser } from "../lib/stream.js";
 
 const signup = asyncHandler(async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -36,7 +37,12 @@ const signup = asyncHandler(async (req, res) => {
     profilePic: randomAvatar,
   });
 
-  //TODO: create a user in stream as well
+  await upsertStreamUser({
+    id:newUser._id.toString(), 
+    name: newUser.fullName, 
+    image: newUser.profilePic || "", 
+  }); 
+  console.log(`Stream user created for ${newUser.fullName}`); 
 
   const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: "7d",
