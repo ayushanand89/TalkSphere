@@ -38,11 +38,11 @@ const signup = asyncHandler(async (req, res) => {
   });
 
   await upsertStreamUser({
-    id:newUser._id.toString(), 
-    name: newUser.fullName, 
-    image: newUser.profilePic || "", 
-  }); 
-  console.log(`Stream user created for ${newUser.fullName}`); 
+    id: newUser._id.toString(),
+    name: newUser.fullName,
+    image: newUser.profilePic || "",
+  });
+  console.log(`Stream user created for ${newUser.fullName}`);
 
   const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: "7d",
@@ -55,28 +55,28 @@ const signup = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === "production", // set to true in production
   });
 
-  res.status(201)
+  res
+    .status(201)
     .json(new ApiResponse(201, newUser, "User Created Successfully"));
 });
 
 const login = asyncHandler(async (req, res) => {
-    const { email, password } = req.body; 
+  const { email, password } = req.body;
 
-    if(!email || !password){
-        throw new ApiError(400, "both email and password required"); 
-    }
+  if (!email || !password) {
+    throw new ApiError(400, "both email and password required");
+  }
 
-    const user = await User.findOne({ email }); 
-    if(!user) {
-        throw new ApiError(401, "email doesn't exist!"); 
-    }
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(401, "email doesn't exist!");
+  }
 
-    const isPasswordCorrect = await user.matchPassword(password); 
-    if(!isPasswordCorrect) {
-        throw new ApiError(401, "wrong password"); 
-    }
+  const isPasswordCorrect = await user.matchPassword(password);
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "wrong password");
+  }
 
-    
   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
     expiresIn: "7d",
   });
@@ -88,16 +88,57 @@ const login = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === "production", // set to true in production
   });
 
-  res
-  .status(200)
-  .json(new ApiResponse(200, user, "logged in successfully"));
-
+  res.status(200).json(new ApiResponse(200, user, "logged in successfully"));
 });
 
-const logout = asyncHandler( async (req, res) => {
-    res.clearCookie("jwt"); 
-    res.status(200)
-    .json(new ApiResponse(200, "", "logged out successfully")); 
-})
+const logout = asyncHandler(async (req, res) => {
+  res.clearCookie("jwt");
+  res.status(200).json(new ApiResponse(200, "", "logged out successfully"));
+});
 
-export { signup, login, logout };
+const onboard = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const { fullName, bio, nativeLanguage, learningLanguage, location } =
+    req.body;
+
+  if (!fullName || !bio || !nativeLanguage || !learningLanguage || !location) {
+    throw new ApiError(
+      400,
+      "All fields are required",
+      [
+        !fullName && "fullName",
+        !bio && "bio",
+        !nativeLanguage && "nativeLanguage",
+        !learningLanguage && "learningLanguage",
+        !location && "location",
+      ].filter(Boolean)
+    );
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      ...req.body,
+      isOnboarded: true,
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new ApiError(404, "Onboarding Error");
+  }
+
+  // TODO: update user info in stream
+  await upsertStreamUser({
+    id: updatedUser._id.toString(), 
+    name: updatedUser.fullName, 
+    image: updatedUser.profilePic || "", 
+  })
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "user updated successfully"));
+});
+
+export { signup, login, logout, onboard };
