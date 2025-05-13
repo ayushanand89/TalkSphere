@@ -129,7 +129,6 @@ const onboard = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Onboarding Error");
   }
 
-  // TODO: update user info in stream
   await upsertStreamUser({
     id: updatedUser._id.toString(), 
     name: updatedUser.fullName, 
