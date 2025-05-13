@@ -1,31 +1,110 @@
+import FriendRequest from "../models/FriendRequest.model.js";
 import User from "../models/User.model.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-const  getRecommendedUsers = asyncHandler( async(req, res) => {
-    const currentUserId = req.user._id;  
-    const currentUser = req.user; 
+const getRecommendedUsers = asyncHandler(async (req, res) => {
+  const currentUserId = req.user._id;
+  const currentUser = req.user;
 
-    const recommendedUsers = await User.find({
-        $and: [
-            { _id: { $ne: currentUserId } },
-            { _id: { $nin: currentUser.friends }},
-            { isOnboarded: true },
-        ],
-    })
+  const recommendedUsers = await User.find({
+    $and: [
+      { _id: { $ne: currentUserId } },
+      { _id: { $nin: currentUser.friends } },
+      { isOnboarded: true },
+    ],
+  });
 
-    res
+  res.status(200).json(new ApiResponse(200, recommendedUsers));
+});
+
+const getMyFriends = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id)
+    .select("friends")
+    .populate("friends", "fullName profilePic nativeLanguage learningLanguage");
+
+  res.status(200).json(new ApiResponse(200, user.friends));
+});
+
+const sendFriendRequest = asyncHandler(async (req, res) => {
+  const myId = req.user._id;
+  const { id: recipientId } = req.params;
+
+  //prevent sending req to yourself
+  if (myId === recipientId) {
+    throw new ApiError(400, "cannot sent request to yourself");
+  }
+
+  const recipient = await User.findById({ recipientId });
+  if (!recipient) {
+    throw new ApiError(400, "Recipient not found");
+  }
+
+  //check if user is already friends
+  if (recipient.friends.includes(myId)) {
+    throw new ApiError(400, "You are already friends with the user");
+  }
+
+  //check if a req already exists
+  const existingRequest = await FriendRequest.findOne({
+    $or: [
+      { sender: myId, recipient: recipientId },
+      { sender: recipientId, recipient: myId },
+    ],
+  });
+  if (existingRequest) {
+    throw new ApiError(
+      400,
+      "A friend request already exist between you and this user"
+    );
+  }
+
+  const friendRequest = await FriendRequest.create({
+    sender: myId,
+    recipient: recipientId,
+  });
+
+  res
     .status(200)
-    .json(new ApiResponse(200, recommendedUsers)); 
-}); 
+    .json(
+      new ApiResponse(200, friendRequest, "friend request created successfully")
+    );
+});
 
-const getMyFriends = asyncHandler( async(req, res) => {
-    const user = await User.findById(req.user._id).select("friends")
-    .populate("friends", "fullName profilePic nativeLanguage learningLanguage"); 
+const acceptFriendRequest = asyncHandler(async (req, res) => {
+  const { id: requestId } = req.params;
 
-    res.status(200)
-    .json(new ApiResponse(200, user.friends)); 
-})
+  const friendRequest = await FriendRequest.findById(requestId);
 
+  if (!friendRequest) {
+    throw new ApiError(400, "Friend request not found");
+  }
 
-export { getRecommendedUsers, getMyFriends }
+  if (friendRequest.recipient.toString() !== req.user._id) {
+    throw new ApiError(403, "you are not authorized to access this request");
+  }
+
+  friendRequest.status = "accepted";
+  await friendRequest.save();
+
+  // add each user to the other's friend array
+  await User.findByIdAndUpdate(friendRequest.sender, {
+    $addToSet: { friends: friendRequest.recipient },
+  });
+
+  await User.findByIdAndUpdate(friendRequest.recipient, {
+    $addToSet: { friends: friendRequest.sender },
+  });
+
+  res
+  .status(200)
+  .json(new ApiResponse(200, "friend request accepted")); 
+});
+
+export {
+  getRecommendedUsers,
+  getMyFriends,
+  sendFriendRequest,
+  acceptFriendRequest,
+};
