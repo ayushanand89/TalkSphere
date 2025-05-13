@@ -102,9 +102,40 @@ const acceptFriendRequest = asyncHandler(async (req, res) => {
   .json(new ApiResponse(200, "friend request accepted")); 
 });
 
+const getFriendRequests = asyncHandler( async(req, res) => {
+    const incomingReqs = await FriendRequest.find({
+        recipient: req.user._id, 
+        status: "pending",   
+    }).populate("sender", "fullName profilePic nativeLanguage learningLanguage"); 
+
+    const acceptedReqs = await FriendRequest.find({
+        recipient: req.user._id, 
+        status: "accepted",
+    }).populate("sender", "fullName profilePic"); 
+
+    res
+    .status(200)
+    .json( new ApiResponse(200, { incomingReqs, acceptedReqs}, "requests fetched")); 
+}); 
+
+const getOutgoingFriendRequests = asyncHandler( async(req, res) => {
+    const outgoingReqs = await FriendRequest.find({
+        sender: req.user._id, 
+        status: "pending", 
+    }).populate("recipient", "fullName profilePic nativeLanguage learningLanguage"); 
+
+    res
+    .status(200)
+    .json( new ApiResponse(200, outgoingReqs, "outgoing requests fetched")); 
+})
+
+
+
 export {
   getRecommendedUsers,
   getMyFriends,
   sendFriendRequest,
   acceptFriendRequest,
+  getFriendRequests,
+  getOutgoingFriendRequests,
 };
