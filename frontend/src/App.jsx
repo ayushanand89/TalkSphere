@@ -22,10 +22,11 @@ const App = () => {
       const res = await axiosInstance.get("/auth/me"); 
       return res.data; 
     },
-    retry: false, // auth check 
+    //retry: false, // auth check 
   }); 
 
   const authUser = authData?.user; 
+  console.log(authUser);
 
   return (
     <div className="h-screen" data-theme="night">

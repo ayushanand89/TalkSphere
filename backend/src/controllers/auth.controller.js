@@ -8,22 +8,32 @@ import { upsertStreamUser } from "../lib/stream.js";
 
 const signup = asyncHandler(async (req, res) => {
   const { fullName, email, password } = req.body;
-  if (!fullName.trim() || !email.trim() || !password.trim()) {
-    throw new ApiError(400, "Please provide all fields");
+  if (!fullName || !email || !password) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Please provide all fields"));
   }
 
   if (password.length < 6) {
-    throw new ApiError(400, "Password must be at least 6 characters");
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(400, null, "Password must be at least 6 characters")
+      );
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new ApiError(400, "Invalid email format");
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Invalid email format"));
   }
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new ApiError(400, "Email Already Exists, please use different email");
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Email Already Exists, please use different email"));
   }
 
   const randomIndex = Math.floor(Math.random() * 100) + 1;
@@ -64,17 +74,23 @@ const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    throw new ApiError(400, "both email and password required");
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "both email and password required"));
   }
 
   const user = await User.findOne({ email });
   if (!user) {
-    throw new ApiError(401, "email doesn't exist!");
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "email doesn't exist!"));
   }
 
   const isPasswordCorrect = await user.matchPassword(password);
   if (!isPasswordCorrect) {
-    throw new ApiError(401, "wrong password");
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "wrong password"));
   }
 
   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
@@ -103,17 +119,16 @@ const onboard = asyncHandler(async (req, res) => {
     req.body;
 
   if (!fullName || !bio || !nativeLanguage || !learningLanguage || !location) {
-    throw new ApiError(
-      400,
-      "All fields are required",
-      [
+    res.status(400).json({
+      message: "All fields are required",
+      missingFields: [
         !fullName && "fullName",
         !bio && "bio",
         !nativeLanguage && "nativeLanguage",
         !learningLanguage && "learningLanguage",
         !location && "location",
-      ].filter(Boolean)
-    );
+      ].filter(Boolean),
+    });
   }
 
   const updatedUser = await User.findByIdAndUpdate(
@@ -126,14 +141,14 @@ const onboard = asyncHandler(async (req, res) => {
   );
 
   if (!updatedUser) {
-    throw new ApiError(404, "Onboarding Error");
+    return res.status(404).json(new ApiResponse(404, null, "Onboarding Error"));
   }
 
   await upsertStreamUser({
-    id: updatedUser._id.toString(), 
-    name: updatedUser.fullName, 
-    image: updatedUser.profilePic || "", 
-  })
+    id: updatedUser._id.toString(),
+    name: updatedUser.fullName,
+    image: updatedUser.profilePic || "",
+  });
 
   res
     .status(200)

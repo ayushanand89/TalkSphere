@@ -33,17 +33,17 @@ const sendFriendRequest = asyncHandler(async (req, res) => {
 
   //prevent sending req to yourself
   if (myId === recipientId) {
-    throw new ApiError(400, "cannot sent request to yourself");
+    return res.status(400).json( new ApiResponse(400, null, "You cannot send a friend request to yourself"));
   }
 
   const recipient = await User.findById({ recipientId });
   if (!recipient) {
-    throw new ApiError(400, "Recipient not found");
+    return res.status(404).json(new ApiResponse(404, null, "Recipient not found"));
   }
 
   //check if user is already friends
   if (recipient.friends.includes(myId)) {
-    throw new ApiError(400, "You are already friends with the user");
+    return res.status(400).json(new ApiResponse(400, null, "You are already friends with the user"));
   }
 
   //check if a req already exists
@@ -54,10 +54,7 @@ const sendFriendRequest = asyncHandler(async (req, res) => {
     ],
   });
   if (existingRequest) {
-    throw new ApiError(
-      400,
-      "A friend request already exist between you and this user"
-    );
+    return res.status(400).json(new ApiResponse(400, null, "Friend request already exists"));
   }
 
   const friendRequest = await FriendRequest.create({
@@ -78,11 +75,11 @@ const acceptFriendRequest = asyncHandler(async (req, res) => {
   const friendRequest = await FriendRequest.findById(requestId);
 
   if (!friendRequest) {
-    throw new ApiError(400, "Friend request not found");
+      return res.status(404).json(new ApiResponse(404, null, "request not found"));
   }
 
   if (friendRequest.recipient.toString() !== req.user._id) {
-    throw new ApiError(403, "you are not authorized to access this request");
+    return res.status(403).json(new ApiResponse(403, null, "you are not authorized to access this request"));
   }
 
   friendRequest.status = "accepted";
@@ -115,7 +112,7 @@ const getFriendRequests = asyncHandler( async(req, res) => {
 
     res
     .status(200)
-    .json( new ApiResponse(200, { incomingReqs, acceptedReqs}, "requests fetched")); 
+    .json( new ApiResponse(200, { incomingReqs, acceptedReqs }, "requests fetched")); 
 }); 
 
 const getOutgoingFriendRequests = asyncHandler( async(req, res) => {
