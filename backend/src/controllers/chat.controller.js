@@ -10,9 +10,7 @@ const getStreamToken = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error in getStreamController");
   }
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, token, "token generated successfully"));
+  res.status(200).json({ token });
 });
 
 export { getStreamToken };
