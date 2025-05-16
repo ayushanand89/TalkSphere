@@ -1,7 +1,6 @@
-import React from 'react'
-import useAuthUser from '../hooks/useAuthUser'
-import { Link, useLocation } from 'react-router';
-import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon } from 'lucide-react';
+import { Link, useLocation } from "react-router";
+import useAuthUser from "../hooks/useAuthUser";
+import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon } from "lucide-react";
 
 const Sidebar = () => {
   const { authUser } = useAuthUser();
@@ -14,7 +13,7 @@ const Sidebar = () => {
         <Link to="/" className="flex items-center gap-2.5">
           <ShipWheelIcon className="size-9 text-primary" />
           <span className="text-3xl font-bold font-mono bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  tracking-wider">
-            TalkSphere
+            Streamify
           </span>
         </Link>
       </div>

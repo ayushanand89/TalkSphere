@@ -1,16 +1,12 @@
 import { generateStreamToken } from "../lib/stream.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js"
-import { asyncHandler } from "../utils/asyncHandler.js";
 
-const getStreamToken = asyncHandler(async (req, res) => {
-  const token = generateStreamToken(req.user._id);
+export async function getStreamToken(req, res) {
+  try {
+    const token = generateStreamToken(req.user.id);
 
-  if (!token) {
-    throw new ApiError(500, "Error in getStreamController");
+    res.status(200).json({ token });
+  } catch (error) {
+    console.log("Error in getStreamToken controller:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-
-  res.status(200).json({ token });
-});
-
-export { getStreamToken };
+}

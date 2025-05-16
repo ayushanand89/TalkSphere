@@ -1,8 +1,8 @@
-
-import { ShipWheelIcon } from "lucide-react";
-import { Link, NavLink } from "react-router";
-import useSignup from "../hooks/useSignup.js";
 import { useState } from "react";
+import { ShipWheelIcon } from "lucide-react";
+import { Link } from "react-router";
+
+import useSignUp from "../hooks/useSignUp";
 
 const SignUpPage = () => {
   const [signupData, setSignupData] = useState({
@@ -11,18 +11,23 @@ const SignUpPage = () => {
     password: "",
   });
 
-  // const queryClient = useQueryClient(); 
-
-  // const { mutate:signupMutation, isPending, error } = useMutation({
+  // This is how we did it at first, without using our custom hook
+  // const queryClient = useQueryClient();
+  // const {
+  //   mutate: signupMutation,
+  //   isPending,
+  //   error,
+  // } = useMutation({
   //   mutationFn: signup,
-  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"]}), 
-  // }); 
+  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+  // });
 
-  const { isPending, error, signupMutation } = useSignup();  
+  // This is how we did it using our custom hook - optimized version
+  const { isPending, error, signupMutation } = useSignUp();
 
   const handleSignup = (e) => {
     e.preventDefault();
-    signupMutation(signupData); 
+    signupMutation(signupData);
   };
 
   return (
@@ -37,13 +42,13 @@ const SignUpPage = () => {
           <div className="mb-4 flex items-center justify-start gap-2">
             <ShipWheelIcon className="size-9 text-primary" />
             <span className="text-3xl font-bold font-mono bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary tracking-wider">
-              TalkSphere
+              Streamify
             </span>
           </div>
 
           {/* ERROR MESSAGE IF ANY */}
           {error && (
-            <div className="alert alert-error mb-4 text-white">
+            <div className="alert alert-error mb-4">
               <span>{error.response.data.message}</span>
             </div>
           )}
@@ -54,7 +59,7 @@ const SignUpPage = () => {
                 <div>
                   <h2 className="text-xl font-semibold">Create an Account</h2>
                   <p className="text-sm opacity-70">
-                    Join TalkSphere and start your language learning adventure!
+                    Join Streamify and start your language learning adventure!
                   </p>
                 </div>
 
@@ -151,7 +156,7 @@ const SignUpPage = () => {
 
                 <div className="text-center mt-4">
                   <p className="text-sm">
-                    Already have an accoutn?{" "}
+                    Already have an account?{" "}
                     <Link to="/login" className="text-primary hover:underline">
                       Sign in
                     </Link>

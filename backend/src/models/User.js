@@ -1,5 +1,5 @@
-import mongoose, { Schema } from "mongoose";
-import bcrypt from "bcryptjs"
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      minlength: 6,
     },
     bio: {
       type: String,
@@ -42,7 +43,7 @@ const userSchema = new mongoose.Schema(
     },
     friends: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
@@ -50,23 +51,26 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//pre hook for password hashing
 userSchema.pre("save", async function (next) {
-    try {
-        if(!this.isModified('password')) return next(); 
-        const salt = await bcrypt.genSalt(10); 
-        this.password = await bcrypt.hash(this.password, salt); 
-        next(); 
-    } catch (error) {
-        next(error); 
-    }
-}); 
+  if (!this.isModified("password")) return next();
 
-userSchema.methods.matchPassword = async function (pass) {
-    const isPasswordCorrect = await bcrypt.compare(pass, this.password); 
-    return isPasswordCorrect; 
-}
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
-const User = mongoose.model("User", userSchema);  
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  const isPasswordCorrect = await bcrypt.compare(
+    enteredPassword,
+    this.password
+  );
+  return isPasswordCorrect;
+};
 
-export default User;  
+const User = mongoose.model("User", userSchema);
+
+export default User;
