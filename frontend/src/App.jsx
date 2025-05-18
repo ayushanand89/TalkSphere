@@ -1,26 +1,23 @@
-import { Routes, Route } from "react-router";
-import HomePage from "./pages//HomePage.jsx";
-import ChatPage from "./pages/ChatPage.jsx";
-import CallPage from "./pages/CallPage.jsx";
+import { Navigate, Route, Routes } from "react-router";
+
+import HomePage from "./pages/HomePage.jsx";
+import SignUpPage from "./pages/SignUpPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
-import SignUpPage from "./pages/SignupPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
+import CallPage from "./pages/CallPage.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
-import toast, { Toaster } from "react-hot-toast";
-import { Navigate } from "react-router";
+
+import { Toaster } from "react-hot-toast";
+
 import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 
 const App = () => {
-  //axios
-  //react query tanstack query
-  //zustand
-
-  const { theme } = useThemeStore();
-
   const { isLoading, authUser } = useAuthUser();
+  const { theme } = useThemeStore();
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
